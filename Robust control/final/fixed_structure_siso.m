@@ -1,0 +1,186 @@
+load("Assignment_Data_SC42145.mat");
+s = tf('s');
+
+Asiso = A;
+Bsiso = B(:, 1);
+Csiso = C(1, :);
+Dsiso = D(1, 1);
+
+siso_sys = ss(Asiso, Bsiso, Csiso, Dsiso);
+Wp_simple = 0.95*(s+0.02*2*pi)/(0.016*pi+s);
+Wp_siso = Wp_simple;
+Wp_siso.u = 'y_act';
+Wp_siso.y = 'z1';
+
+G_siso = -1* siso_sys;
+G_siso.u = 'u';
+G_siso.y = 'y_plant';
+
+C_struct = 0.3410 + 1.7475/s + (1.0698*s)/(1.4856*s+1);
+C_siso = C_struct;
+C_siso.u = 'e';
+C_siso.y = 'u';
+
+Sum1 = sumblk('e=w_ref-y_act');
+Sum2 = sumblk('y_act=y_plant+y_dist');
+
+siso_system = connect(G_siso, Wp_siso, C_siso, Sum1, Sum2,{'w_ref', 'y_dist'},{'y_plant' , 'z1'});
+
+%% PID control
+Kp = realp ('Kp' ,1);
+Ki = realp('Ki' ,1);
+Kd = realp ('Kd' ,1);
+Tf = realp ('Tf' ,1);
+
+C_struct = Kp + Ki/s + (Kd*s)/(Tf*s+1);
+C_pid = C_struct;
+C_pid.u = 'e';
+C_pid.y = 'u';
+
+Wp_pid = Wp_simple;
+Wp_pid.u = 'y_act';
+Wp_pid.y = 'z1';
+
+G_pid = -1* siso_sys;
+G_pid.u = 'u';
+G_pid.y = 'y_plant';
+
+Sum1 = sumblk('e=w_ref-y_act');
+Sum2 = sumblk('y_act=y_plant+y_dist');
+
+pid_system = connect(G_pid, Wp_pid, C_pid, Sum1, Sum2,{'w_ref', 'y_dist'},{'y_plant' , 'z1'});
+
+opt = hinfstructOptions('Display', 'off', 'RandomStart', 50);
+% N_pid = hinfstruct(pid_system, opt);
+
+% Extract controller gains :
+% Kp_opt = N_pid.Blocks.Kp.Value
+% Ki_opt = N_pid.Blocks.Ki.Value
+% Kd_opt = N_pid.Blocks.Kd.Value
+% Tf_opt = N_pid.Blocks.Tf.Value
+
+Kp_opt = 0.2747;
+Ki_opt = 0.4934;
+Kd_opt = 5.2602;
+Tf_opt = 0.1354;
+
+pid_opt = Kp_opt + Ki_opt/s + (Kd_opt*s)/(Tf_opt*s+1);
+pid_opt.u = 'e';
+pid_opt.y = 'u';
+pid_system_opt = connect(G_siso, Wp_pid, pid_opt, Sum1, Sum2,{'w_ref', 'y_dist'},{'y_plant' , 'z1', 'u'});
+
+%% LL control
+
+Kp_ll = realp('Kp_ll' ,1);
+Ki_ll = realp('Ki_ll' ,1);
+p1 = realp("p1", 1);
+p2 = realp("p2", 1);
+z1 = realp("z1", 1);
+z2 = realp("z2", 1);
+
+C_struct = ((s-z1)*(s-z2)/(s-p2)/(s-p1))*(Kp_ll + Ki_ll/s);
+C_ll = C_struct;
+C_ll.u = 'e';
+C_ll.y = 'u';
+
+Wp_ll = Wp_simple;
+Wp_ll.u = 'y_act';
+Wp_ll.y = 'z1';
+
+G_ll = -1* siso_sys;
+G_ll.u = 'u';
+G_ll.y = 'y_plant';
+
+Sum1 = sumblk('e=w_ref-y_act');
+Sum2 = sumblk('y_act=y_plant+y_dist');
+
+ll_system = connect(G_ll, Wp_siso, C_ll, Sum1, Sum2,{'w_ref', 'y_dist'},{'y_plant' , 'z1'});
+
+opt = hinfstructOptions('Display', 'off', 'RandomStart', 50);
+% N_ll = hinfstruct(ll_system, opt);
+
+% Extract controller gains :
+% Kp_ll_opt = N_ll.Blocks.Kp_ll.Value
+% Ki_ll_opt = N_ll.Blocks.Ki_ll.Value
+% p1_opt = N_ll.Blocks.p1.Value
+% p2_opt = N_ll.Blocks.p2.Value
+% z1_opt = N_ll.Blocks.z1.Value
+% z2_opt = N_ll.Blocks.z2.Value
+
+Kp_ll_opt = 5.7460;
+Ki_ll_opt = 8.4721;
+p1_opt = -9.5582;
+p2_opt = -6.5568;
+z1_opt = -2.7138;
+z2_opt = -0.0612;
+
+ll_opt = (s-z1_opt)*(s-z2_opt)/(s-p2_opt)/(s-p1_opt) * (Kp_ll_opt + Ki_ll_opt/s);
+ll_opt.u = 'e';
+ll_opt.y = 'u';
+ll_system_opt = connect(G_ll, Wp_ll, ll_opt, Sum1, Sum2,{'w_ref', 'y_dist'},{'y_plant' , 'z1'});
+%% System perfomances
+% untuned_stepinfo = stepinfo(siso_system(1, 1))
+% pid_stepinfo = stepinfo(pid_system_opt(1, 1))
+% ll_stepinfo = stepinfo(ll_system_opt(1, 1))
+
+
+step(pid_system_opt(1, 1), ll_system_opt(1, 1))
+
+% 
+% hinfnorm(siso_system)
+% hinfnorm(pid_system_opt)
+% hinfnorm(ll_system_opt)
+
+%% Manual tuned controller
+Wp_pid = Wp_simple;
+Wp_pid.u = 'y_act';
+Wp_pid.y = 'z1';
+
+G_pid = -1* siso_sys;
+G_pid.u = 'u';
+G_pid.y = 'y_plant';
+
+Sum1 = sumblk('e=w_ref-y_act');
+Sum2 = sumblk('y_act=y_plant+y_dist');
+
+manual = 0.050425 * (s + 0.0005424) / (s*(s + 0.2248)*(s + 0.0005843));
+manual.u = 'e';
+manual.y = 'u';
+manual_system = connect(G_siso, Wp_pid, manual, Sum1, Sum2,{'w_ref', 'y_dist'},{'y_plant' , 'z1', 'u'});
+
+%% Wind simulation
+t = Wind_Data.Time;
+t = linspace(0, t(end), Wind_Data.Length);
+
+u = [ones(Wind_Data.Length, 1), Wind_Data.Data];
+
+% lsim(pid_system_opt, u, t)
+y_pid = lsim(pid_system_opt, u, t);
+y_manual = lsim(manual_system, u, t);
+y_ll = lsim(ll_system_opt, u, t);
+
+figure;
+subplot(2, 1, 1); 
+hold on
+plot(t, y_pid(:,1));
+plot(t, y_manual(:,1));
+plot(t, y_ll(:,1), 'g');
+hold off
+% xlabel('y\_pid(:,1)');
+% ylabel('y\_manual(:,1)');
+title('Generator rotational speed');
+grid on;
+legend('PID controller', 'Manual controller', 'LL controller')
+
+subplot(2, 1, 2); % Select the 2nd subplot
+hold on
+plot(t, y_pid(:,2));
+plot(t, y_manual(:,2));
+plot(t, y_ll(:,2), 'g');
+hold off
+% xlabel('y\_pid(:,2)');
+% ylabel('y\_manual(:,2)');
+title('Weighted ouput');
+grid on;
+legend('PID controller', 'Manual controller', 'LL controller')
+% sgtitle('Tracking performanc'); 
