@@ -4,7 +4,7 @@ function dF = Jacobian(theta,mic_locations)
     % mic_locations     microphonne locations
     % OUTPUT
     % dF                evaluation of Jacobian at current state estimate
-    
+
     c      = 343; % in [m/s]
     b = [2.93055075098328e-06 8.69556862250426e-06 2.93055075098328e-06 ...
     -4.37180521957482e-06 1.02329067216167e-05 1.29232483949712e-05...
