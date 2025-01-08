@@ -17,11 +17,8 @@ function J = jacobian(psi,E)
 
 
 
-
 %%%%%% YOUR CODE HERE %%%%%%
-
-
-J = [];
-
-
+% assume l=1
+N = size(psi, 1);
+J = 2/N * psi' * E;
 end

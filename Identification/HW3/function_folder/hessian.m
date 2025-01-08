@@ -18,9 +18,6 @@ function H = hessian(psi)
 
 
 %%%%%% YOUR CODE HERE %%%%%%
-
-
-H = [];
-
-
+N = size(psi, 1);
+H = 2/N * (psi' * psi);
 end
