@@ -1,0 +1,3 @@
+[submodule "MPC"]
+	path = MPC
+	url = git@github.com:misofey/MPC.git
