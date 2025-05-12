@@ -1,3 +1,6 @@
 [submodule "MPC"]
 	path = MPC
 	url = git@github.com:misofey/MPC.git
+[submodule "Integrationproject"]
+	path = Integrationproject
+	url = https://github.com/misofey/Integrationproject.git
