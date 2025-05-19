@@ -39,21 +39,24 @@ sampling_period = 2*pi/(20*7.14);
 
 plant_disc = make_discrete(plant, sampling_period);
 
-controller_1_disc = make_discrete(controller_1, sampling_period);
-controller_2_disc = make_discrete(controller_2, sampling_period);
+% controller_1_disc = make_discrete(controller_1, sampling_period);
+% controller_2_disc = make_discrete(controller_2, sampling_period);
+
+controller_1_disc = c2d(controller_1, sampling_period, 'tustin');
+controller_2_disc = c2d(controller_2, sampling_period);
 
 complete_disc_1 = connect(controller_1_disc, plant_disc, err, dist, {'r'}, 'y');
 complete_disc_2 = connect(controller_2_disc, plant_disc, err, dist, {'du'}, 'y');
 
-% figure
-% step(complete_disc_1)
-% stepinfo(complete_disc_1)
-% pole(complete_disc_1)
-% 
-% figure
-% step(complete_disc_2)
-% stepinfo(complete_disc_2)
-% pole(complete_disc_2)
+figure
+step(complete_disc_1)
+stepinfo(complete_disc_1)
+pole(complete_disc_1)
+
+figure
+step(complete_disc_2)
+stepinfo(complete_disc_2)
+pole(complete_disc_2)
 
 % tf(plant_disc)  %just checking
 % plant_disc = c2d(plant, sampling_period, 'zoh')
@@ -178,51 +181,46 @@ stairs(obs_t2, obs_err2(:, 4));
 hold off
 
 %% Revised observer design
-% figure;
-% p1_obs_cont = [-200 -180 -100+40i -100-40i];
-% p1_ctr_cont = [-55 -45 -25+10i -25-10i];
-% % p1_ctr_cont = [-52 -54 -14+14.2*1i -14-14.2*1i];
-% 
-% observable = rank([plant_disc.C; ...
-%     plant_disc.C*plant_disc.A; ...
-%     plant_disc.C*plant_disc.A*plant_disc.A; ...
-%     plant_disc.C*plant_disc.A*plant_disc.A*plant_disc.A]') == 4
-% 
-% [K_obs, L_obs, observed_tracking] = observer_placement(plant_disc, p1_ctr_cont, p1_obs_cont, 0.5*sampling_period);
-% [K_obs_drate, L_obs_rate, observed_tracking_drate] = observer_placement(plant_disc, p2_cont, p1_obs_cont, 0.5*sampling_period);
-% 
-% 
-% inital_state = [1 15 115 155];
-% x0 = [inital_state, -inital_state];
-% observer_config = RespConfig("InitialState", x0);
-% tracking_config = RespConfig("InitialState", inital_state);
-% 
-% [obs_y, obs_t] = step(observed_tracking2(1), observer_config);
-% observer_stepinfo = stepinfo(obs_y, obs_t);
-% 
-% [trk_y, trk_t] = step(tracking2(1), tracking_config);
-% tracker_stepinfo = stepinfo(trk_y, trk_t);
-% 
-% [obs_y2, obs_t2] = step(observed_tracking_drate(1), observer_config);
-% observer_stepinfo_drate = stepinfo(obs_y2, obs_t2);
-% 
-% [trk_y2, trk_t2] = step(tracking4(1), tracking_config);
-% tracker_stepinfo_drate = stepinfo(trk_y2, trk_t2);
-% 
-% 
-% [p1y1, p1t1] = zoh(obs_y, obs_t);
-% [p1y2, p1t2] = zoh(trk_y, trk_t);
-% [p1y3, p1t3] = zoh(obs_y2, obs_t2);
-% [p1y4, p1t4] = zoh(trk_y2, trk_t2);
-% 
-% hold on
-% plot(p1t1, p1y1, 'DisplayName', 'Observer feedback')
-% plot(p1t2, p1y2, 'DisplayName', "State feedback")
-% plot(p1t3, p1y3, 'DisplayName', "Double rate output feedback")
-% plot(p1t4, p1y4, 'DisplayName', "Double rate sate feedback")
-% legend
-% hold off
+rev_obs = p2_cont;
+rev_obs_cont = 5 * rev_obs;
 
+% unintegrated
+L_int_1 = 0.00;
+[K_obs, L_obs, observed_tracking] = observer_placement_integrator(plant_disc, rev_obs, rev_obs_cont, L_int_1, 0.5*sampling_period);
+
+inital_state_int = [0 0 0 0];
+x0_int = [inital_state_int, 0*inital_state_int, 0, 1];
+observer_config_int = RespConfig("InitialState", x0_int);
+
+figure;
+[y_obs_int, t_obs_int] = lsim(observed_tracking(1), zeros(100, 1)', [], x0_int);
+stairs(t_obs_int, y_obs_int)
+
+
+
+% integrated
+L_int_1 = 0.02;
+[K_obs, L_obs, observed_tracking] = observer_placement_integrator(plant_disc, rev_obs, rev_obs_cont, L_int_1, 0.5*sampling_period);
+
+inital_state_int = [1 10 10 1000];
+x0_int = [inital_state_int, 0*inital_state_int, 0, 1];
+observer_config_int = RespConfig("InitialState", x0_int);
+
+
+pole(observed_tracking(1))
+huh = ss(observed_tracking.A(1:9, 1:9), observed_tracking.B(1:9), observed_tracking.C(1, 1:9), observed_tracking.D(1));
+pole(huh)
+
+huh = ss(observed_tracking.A(1:8, 1:8), observed_tracking.B(1:8), observed_tracking.C(1, 1:8), observed_tracking.D(1));
+pole(huh)
+
+figure;
+[y_obs_int, t_obs_int] = lsim(observed_tracking(1), zeros(100, 1)', [], x0_int);
+stairs(t_obs_int, y_obs_int)
+
+figure;
+[y_obs_int, t_obs_int] = lsim(observed_tracking(1), ones(200, 1)', [], x0_int);
+stairs(t_obs_int, y_obs_int)
 
 %% Discrete lqr control
 disp("LQR stepinfos")
@@ -440,8 +438,6 @@ stairs(pid_dist_tu, pid_dist_yu)
 figure;
 stairs(pid_dist_ty, pid_dist_yy)
 
-%% FSF disturbance
-
 %% Disturbance observer
 
 [K_disturbance_observer, L_disturbance_observer, disturbance_observer] = observer_placement_disturbance(plant_disc, p2_cont, p1_obs_cont, 0.5*sampling_period);
@@ -476,26 +472,49 @@ dist_poles = [pole_center, pole_center+arm1, pole_center+arm1*1i, pole_center-ar
 [K_state_integrator, integ_tracking] = pole_placement_disturbance(plant_disc, dist_poles, sampling_period);
 
 x0_integ = [0 0 0 0 0 1];
-lsim(integ_tracking, zeros(1000, 1)', [], x0_integ);
+% lsim(integ_tracking, zeros(1000, 1)', [], x0_integ);
 
 figure;
-step(integ_tracking(1))
+% step(integ_tracking(1))
 
-[obs_dy, obs_dt] = lsim(integ_tracking([1, 2]), zeros(500, 1)', [], x0);
+% [obs_dy, obs_dt] = lsim(integ_tracking([1, 2]), zeros(500, 1)', [], x0);
+[fsf_yd, fsf_td] = lsim(integ_tracking(1), zeros(1, 1000), [], x0_integ);
+[fsf_yu, fsf_tu] = step(integ_tracking(2));
+[fsf_yy, fsf_ty] = step(integ_tracking(1));
 
 figure;
-stairs(obs_dt, obs_dy(:, 1));
-figure; 
-stairs(obs_dt, obs_dy(:, 2));
+stairs(fsf_td, fsf_yd)
+figure;
+stairs(fsf_tu, fsf_yu)
+figure;
+stairs(fsf_ty, fsf_yy)
 
-% figure;
-% stairs(obs_dt, obs_dy(:, 1));
-% figure; 
-% stairs(obs_dt, obs_dy(:, 2));
-% figure; 
-% stairs(obs_dt, ob
-% s_dy(:, 2));
+
+%% lqr integrator
+[K_lqrint, S_lqrint, P_lqrint, lqr_trackingint] = dlqr_creation_disturbance(plant_disc, Q_new2, R_new2, N_new2, sampling_period);
+
+
+x0_integ = [0 0 0 0 0 1];
+% lsim(integ_tracking, zeros(1000, 1)', [], x0_integ);
+
+figure;
+% step(integ_tracking(1))
+
+% [obs_dy, obs_dt] = lsim(integ_tracking([1, 2]), zeros(500, 1)', [], x0);
+[lqr_yd, lqr_td] = lsim(lqr_trackingint(1), zeros(1, 1000), [], x0_integ);
+[lqr_yu, lqr_tu] = step(lqr_trackingint(2));
+[lqr_yy, lqr_ty] = step(lqr_trackingint(1));
+
+figure;
+stairs(lqr_td, lqr_yd)
+figure;
+stairs(lqr_tu, lqr_yu)
+figure;
+stairs(lqr_ty, lqr_yy)
+
+
 %% Delay in the system
+
 
 
 %% Functions
@@ -531,7 +550,7 @@ function [K, tracking] = pole_placement(plant_disc, p_cont, sampling_period)
     
     
     placed = ss(A-B*K, B, C, D, sampling_period);
-    comb_C = [C, zeros(4, 1); -K -L];
+    comb_C = [C; -K];
     comb_D = [0; 1/dcgain(placed)];
     tracking = ss(A-B*K, B/dcgain(placed), comb_C, comb_D, sampling_period);
     
@@ -685,9 +704,55 @@ function [K, S, P, tracking] = dlqr_creation_disturbance(plant_disc, Q, R, N, sa
     
     [K, S, P] = dlqr(A, B, Q, R, N);
     lqed = ss(A-B*K, B, C, D, sampling_period);
-    comb_C = [C; -K];
-    comb_D = [0; 1/dcgain(lqed)];
-    tracking = ss(A-B*K, B/dcgain(lqed), comb_C, comb_D, sampling_period);
+    L_int = 0.004/dcgain(lqed);
+
+    comb_A = [A-B*K, -B*L_int, B; C, 1, 0; zeros(1, 5) 1];
+    comb_B = [B; -dcgain(lqed); 0];
+    comb_C = [C zeros(1, 2); -K -L_int, 0; 0 0 0 0 1 0];
+    comb_D = [0; 1/dcgain(lqed); 0];
+
+    tracking = ss(comb_A, comb_B/dcgain(lqed), comb_C, comb_D, sampling_period);
 
     lqr_gain = dcgain(lqed);
+end
+
+function [K, L, tracking] = observer_placement_integrator(plant_disc, p_cont, p_cont_obs, L_int, sampling_period)
+    A = plant_disc.A;
+    B = plant_disc.B;
+    C = plant_disc.C;
+    D = plant_disc.D;
+    disp("new observer placement: ")
+
+    p = exp(p_cont*sampling_period);
+    p_obs = exp(p_cont_obs*sampling_period);
+
+    K = place(A', C', p_obs)';
+    L = place(A, B, p);
+    
+    comb_A = [A, -B*L; K*C, A-K*C-B*L];
+    comb_B = [B; B];
+    comb_C = [C zeros(1, 4)];
+    comb_D = 0;
+
+    undisturbed = ss(comb_A, comb_B, comb_C, comb_D, sampling_period);
+    
+    L_int = L_int/dcgain(undisturbed);
+
+    comb_A = [A, -B*L,  -B*L_int, B; 
+        K*C, A-K*C-B*L, -B*L_int, zeros(4, 1);
+        C zeros(1, 4) 1 0;
+        zeros(1, 9) 1];
+    comb_B = [B; B; -1; 0];
+    comb_C = [C zeros(1, 6)];
+    comb_D = 0;
+
+    observed = ss(comb_A, comb_B, comb_C, comb_D, sampling_period);
+    
+    output_C = eye(10);
+    tracking = ss(comb_A, comb_B/dcgain(observed), output_C, D, sampling_period);
+
+    pole(observed)
+    damp(observed)
+
+    observed_gain = dcgain(observed);
 end
