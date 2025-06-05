@@ -1,11 +1,11 @@
 function [eigenvalues, percent_grid, h_grid] = q2()
-    ogss = create_ogss()
+    ngss = create_ngss()
 
     h_min = -7;
     h_max = -0.5;
     hs = 2.^(h_min:0.06125:h_max);
 
-    percentages = linspace(0, 0.99, 100);
+    percentages = linspace(0, 0.99, 500);
     [h_grid, percent_grid] = meshgrid(hs, percentages);
 
     eigenvalues = zeros(size(h_grid));
@@ -29,7 +29,7 @@ function [eigenvalues, percent_grid, h_grid] = q2()
     h_stable = 0.55;
 
     p = [-2+1i -2-1i];
-    K_original = place(ogss.A, ogss.B, p);
+    K_original = place(ngss.A, ngss.B, p);
 
     % ntau = 10;
     % taus = linspace(0, 0.15, ntau);
@@ -90,10 +90,10 @@ end
 
 function [biggest] = eigenvalue(tau_perc, h)
     tau = h * tau_perc;
-    ogss = create_ogss();
-    Fx = expm(ogss.A * h);
-    Fu = (expm(ogss.A * h) - expm(ogss.A * (h -tau))) * inv(ogss.A) * ogss.B;
-    G1 = (expm(ogss.A * (h-tau)) - eye(2)) * inv(ogss.A) * ogss.B;
+    ngss = create_ngss();
+    Fx = expm(ngss.A * h);
+    Fu = (expm(ngss.A * h) - expm(ngss.A * (h -tau))) * inv(ngss.A) * ngss.B;
+    G1 = (expm(ngss.A * (h-tau)) - eye(2)) * inv(ngss.A) * ngss.B;
 
     F = [Fx, Fu; zeros(1, 3)];
     G = [G1; 1];
@@ -101,7 +101,7 @@ function [biggest] = eigenvalue(tau_perc, h)
     sys = ss(F, G, eye(3), zeros(3,1), h);
 
     p = [-2+j, -2-j];
-    K = place(ogss.A, ogss.B, p);
+    K = place(ngss.A, ngss.B, p);
     K = [K 0];
     fedback = ss(F - G*K, G, sys.C, sys.D, h);
     biggest = max(abs(pole(fedback)));
@@ -110,10 +110,10 @@ end
 
 function [biggest, poles] = eigenvalue_pole(tau_perc, h, K)
     tau = h * tau_perc;
-    ogss = create_ogss();
-    Fx = expm(ogss.A * h);
-    Fu = (expm(ogss.A * h) - expm(ogss.A * (h -tau))) * inv(ogss.A) * ogss.B;
-    G1 = (expm(ogss.A * (h-tau)) - eye(2)) * inv(ogss.A) * ogss.B;
+    ngss = create_ngss();
+    Fx = expm(ngss.A * h);
+    Fu = (expm(ngss.A * h) - expm(ngss.A * (h -tau))) * inv(ngss.A) * ngss.B;
+    G1 = (expm(ngss.A * (h-tau)) - eye(2)) * inv(ngss.A) * ngss.B;
 
     F = [Fx, Fu; zeros(1, 3)];
     G = [G1; 1];
@@ -126,10 +126,10 @@ function [biggest, poles] = eigenvalue_pole(tau_perc, h, K)
 end
 
 function [sys] = get_delayed_system(tau, h)
-    ogss = create_ogss();
-    Fx = expm(ogss.A * h);
-    Fu = (expm(ogss.A * h) - expm(ogss.A * (h -tau))) * inv(ogss.A) * ogss.B;
-    G1 = (expm(ogss.A * (h-tau)) - eye(2)) * inv(ogss.A) * ogss.B;
+    ngss = create_ngss();
+    Fx = expm(ngss.A * h);
+    Fu = (expm(ngss.A * h) - expm(ngss.A * (h -tau))) * inv(ngss.A) * ngss.B;
+    G1 = (expm(ngss.A * (h-tau)) - eye(2)) * inv(ngss.A) * ngss.B;
 
     F = [Fx, Fu; zeros(1, 3)];
     G = [G1; 1];
@@ -138,10 +138,10 @@ function [sys] = get_delayed_system(tau, h)
 end
 
 function [sys] = get_fedback_system(tau, h, K)
-    ogss = create_ogss();
-    Fx = expm(ogss.A * h);
-    Fu = (expm(ogss.A * h) - expm(ogss.A * (h -tau))) * inv(ogss.A) * ogss.B;
-    G1 = (expm(ogss.A * (h-tau)) - eye(2)) * inv(ogss.A) * ogss.B;
+    ngss = create_ngss();
+    Fx = expm(ngss.A * h);
+    Fu = (expm(ngss.A * h) - expm(ngss.A * (h -tau))) * inv(ngss.A) * ngss.B;
+    G1 = (expm(ngss.A * (h-tau)) - eye(2)) * inv(ngss.A) * ngss.B;
 
     F = [Fx, Fu; zeros(1, 3)];
     G = [G1; 1];
@@ -149,7 +149,7 @@ function [sys] = get_fedback_system(tau, h, K)
     sys = ss(F, G, eye(3), zeros(3,1), h);
 
     % p = [-2+j, -2-j];
-    % K = place(ogss.A, ogss.B, p);
+    % K = place(ngss.A, ngss.B, p);
     sys = ss(F - G*K, G, sys.C, sys.D, h);
 end
 
