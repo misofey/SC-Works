@@ -29,7 +29,7 @@ update3_b = (
     # + 0.5 * (u_og * (1 - three)) @ H @ three
     + c @ three
 )
-update3_u3 = -update3_b /3 update3_a
+update3_u3 = -update3_b / update3_a
 print(update3_a, update3_b)
 print(update3_u3)
 
