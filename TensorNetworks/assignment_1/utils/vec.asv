@@ -1,0 +1,22 @@
+function vec_X = vec(X)
+    % VEC takes as input a tensor of any order and returns its
+    % vectorization, i.e. a column vector.
+    % INPUT tensor X.
+    % OUTPUT vector vec_X.
+
+    sz = size(X);
+
+    vec_X = zeros(numel(X));
+    order = size(sz);
+    for i=1:order
+        for i=sz(order)
+         
+        end
+    end
+end
+
+function red_X = remove_one_order(X)
+    sz = size(X);
+    last_dimension = sz(end);
+    output_size = 
+end
