@@ -127,14 +127,13 @@ def plot_variable_convergence(
 
 
 def accelerated_method(
-    iterations_normal, e_hist_normal, iterations_accelerated, e_hist_accelerated, betas
+    iterations_normal, e_hist_normal, iterations_accelerated, e_hist_accelerated
 ):
-    for i in range(len(betas)):
-        plt.semilogy(
-            iterations_accelerated[i],
-            e_hist_accelerated[i],
-            label="beta = " + str(betas[i]),
-        )
+    plt.semilogy(
+        iterations_accelerated,
+        e_hist_accelerated,
+        label="alpha = 2.5, Nesterov's method",
+    )
     # proxy_constant = plt.Line2D(
     #     [0], [0], color="black", linestyle="--", label="Constant step size"
     # )
@@ -149,7 +148,7 @@ def accelerated_method(
     plt.semilogy(
         iterations_normal,
         e_hist_normal,
-        label="alpha=5, constant step size",
+        label="alpha=2.5, constant step size",
         linestyle="--",
     )
     plt.legend(loc="best")

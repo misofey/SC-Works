@@ -243,7 +243,6 @@ def accelerated_subgradient_optimization(
     tol=1e-16,
     n_iter=400,
     alpha=1.0,
-    beta=1.0,
     lambdas=None,
     steps="constant",
 ):
@@ -257,9 +256,12 @@ def accelerated_subgradient_optimization(
     iterations = []
     xfinal_hist = np.zeros([n_iter, 2, 4])
     e_hist = np.zeros([n_iter])
+    beta = 0
 
     for i in range(0, n_iter):
-        gammas = lambdas + beta * (lambdas - lambda_prev)
+        stuff = (1 + np.sqrt(1 + 4 * beta * beta)) / 2
+        gammas = lambdas + (beta - 1) / stuff * (lambdas - lambda_prev)
+        beta = stuff
         grad_new, xfinals = get_subgradient(gammas, subproblems, agents)
         norm = np.linalg.norm(grad_new)
         iterations.append(i)
@@ -365,20 +367,16 @@ def problem_b(agents, subproblems, u_cent, x_cent):
 
 
 def problem_c(agents, subproblems, u_cent, x_cent):
-    betas = [0.5, 1, 2, 3.5, 5]
-    results_accelerated = [
-        accelerated_subgradient_optimization(
-            subproblems,
-            agents,
-            np.array(u_cent),
-            tol=1e-10,
-            n_iter=100,
-            alpha=1.2,
-            beta=beta,
-            steps="constant",
-        )
-        for beta in betas
-    ]
+    # betas = [0.5, 1, 2, 3.5, 5]
+    result_accelerated = accelerated_subgradient_optimization(
+        subproblems,
+        agents,
+        np.array(u_cent),
+        tol=1e-10,
+        n_iter=100,
+        alpha=2.5,
+        steps="constant",
+    )
 
     results_normal = subgradient_optimization(
         subproblems,
@@ -386,20 +384,19 @@ def problem_c(agents, subproblems, u_cent, x_cent):
         np.array(u_cent),
         tol=1e-10,
         n_iter=100,
-        alpha=5.0,
+        alpha=2.5,
         steps="constant",
     )
 
-    iterations_accelerated, e_hist_accelerated = [
-        [res[i] for res in results_accelerated] for i in (0, 3)
-    ]
+    # iterations_accelerated, e_hist_accelerated = [
+    #     [res[i] for res in result_accelerated] for i in (0, 3)
+    # ]
 
     accelerated_method(
         results_normal[0],
         results_normal[3],
-        iterations_accelerated,
-        e_hist_accelerated,
-        betas,
+        result_accelerated[0],
+        result_accelerated[3],
     )
 
 
@@ -412,7 +409,7 @@ if __name__ == "__main__":
 
     u_cent, x_cent = centralized_solution(agents)
 
-    problem_a(agents, subproblems, u_cent, x_cent)
+    # problem_a(agents, subproblems, u_cent, x_cent)
     # problem_b(agents, subproblems, u_cent, x_cent)
     problem_c(agents, subproblems, u_cent, x_cent)
     plt.show()

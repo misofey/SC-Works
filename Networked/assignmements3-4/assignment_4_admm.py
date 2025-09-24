@@ -117,7 +117,7 @@ def sub_problem(agent: Agent, rho) -> cp.Problem:
     lambdas = cp.Parameter((2, 1))
     xf = cp.Parameter((2, 1))
     # rho = cp.Parameter(pos=True, value=1)
-    xf_var = cp.Variable((2, 1))
+    # xf_var = cp.Variable((2, 1))
 
     xfinal = agent.M[2 * nt - 2 :, :] @ u + agent.b[2 * nt - 2 :].reshape(2, 1)
     Mf = agent.M[2 * nt - 2 :, :]
@@ -134,15 +134,15 @@ def sub_problem(agent: Agent, rho) -> cp.Problem:
     #     )
     #     + 2 * (agent.b @ agent.M + rho / 2 * (bf - xf).T @ Mf) @ u
     # )
-    # augment = rho / 2 * cp.sum_squares(xfinal - xf)
+    augment = rho / 2 * cp.sum_squares(xfinal - xf)
 
-    augment = rho / 2 * (cp.quad_form(u, Mf.T @ Mf) + 2 * (bf - xf).T @ Mf @ u)
+    # augment = rho / 2 * (cp.quad_form(u, Mf.T @ Mf) + 2 * (bf - xf).T @ Mf @ u)
 
     constraint = xfinal - xf
     cost = f + lambdas.T @ constraint + augment
     # augment = 1
     return Subproblem(
-        cp.Problem(cp.Minimize(cost), [-u <= u_max, u <= u_max, xf_var == xf]),
+        cp.Problem(cp.Minimize(cost), [-u <= u_max, u <= u_max]),
         xfinal,
         f,
         constraint,
