@@ -4,4 +4,5 @@ function z = frob_norm(X)
     % INPUT tensor X.
     % OUTPUT scalar z.
 
+    z = sqrt(frob_inner(X, X));
 end

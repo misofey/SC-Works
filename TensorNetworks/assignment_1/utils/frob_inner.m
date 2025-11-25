@@ -3,5 +3,6 @@ function z = frob_inner(X,Y)
     % their Frobenius inner product.
     % INPUT tensor X, Y.
     % OUTPUT scalar z.
-    
+
+    z = X(:)' * Y(:);
 end
