@@ -6,6 +6,19 @@ c = 7;
 ogss = get_ogss(a, b, c);
 q2(ogss, 1);
 q3()
+% q2(ogss, 1);
+
+pole(edge_system)
+desired_poles = [0.96, 0.95, 0.1]
+
+K = place(edge_system.A, edge_system.B, desired_poles);
+h = 0.55;
+
+fedback = ss(edge_system.A - edge_system.B * K, edge_system.B, edge_system.C, edge_system.D, h);
+
+pole(fedback)
+step(fedback)
+
 
 % h = 0.5;
 % disc = c2d(ogss, h, "zoh");

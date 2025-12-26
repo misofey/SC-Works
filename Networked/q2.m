@@ -86,6 +86,11 @@ function [eigenvalues, percent_grid, h_grid] = q2()
     legend();
 
 
+    save("max_delay_system.mat", "edge_system");
+    
+    undelayed_poles = pole(get_delayed_system(0.55, 0))
+    
+    
 end
 
 function [biggest] = eigenvalue(tau_perc, h)
@@ -137,6 +142,7 @@ function [sys] = get_delayed_system(tau, h)
     sys = ss(F, G, eye(3), zeros(3,1), h);
 end
 
+<<<<<<< HEAD
 function [sys] = get_fedback_system(tau, h, K)
     ogss = create_ogss();
     Fx = expm(ogss.A * h);
@@ -169,4 +175,12 @@ function [eigenvalues, set_poles, K] = get_delay_response_for_poles(target_poles
     end
 
 
+=======
+function [K, system, poles] = delayed_pole_placement(poles, sys)
+    K = place(sys.A, sys.B, poles);
+    fedback = ss(sys.A - sys.B * K, sys.B, sys.C, sys.D, h);
+    
+    poles(fedback)
+    step(fedback)
+>>>>>>> 018cbf2 (clean up identification networked and integration proj)
 end

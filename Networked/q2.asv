@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 function [eigenvalues, percent_grid, h_grid] = q2()
     ogss = create_ogss()
 
@@ -6,6 +7,18 @@ function [eigenvalues, percent_grid, h_grid] = q2()
     hs = 2.^(h_min:0.06125:h_max);
 
     percentages = linspace(0, 0.99, 100);
+=======
+function [eigenvalues, percent_grid, h_grid] = q2(ogss, upper_limit)
+    h = 0.8 * upper_limit;
+    tau = 0.1 * h;
+
+    h_min = -7;
+    h_max = -0.5;
+    hs = 2.^(h_min:0.125:h_max);
+    nh = length(hs);
+
+    percentages = linspace(0, 0.99, 10);
+>>>>>>> 018cbf2 (clean up identification networked and integration proj)
     [h_grid, percent_grid] = meshgrid(hs, percentages);
 
     eigenvalues = zeros(size(h_grid));
@@ -15,6 +28,7 @@ function [eigenvalues, percent_grid, h_grid] = q2()
         end
     end
     
+<<<<<<< HEAD
     figure;
     hold on;
     contourf(percent_grid, h_grid, eigenvalues, 30);
@@ -33,12 +47,31 @@ function [eigenvalues, percent_grid, h_grid] = q2()
 
     ntau = 10;
     taus = linspace(0, 0.15, ntau);
+=======
+    % figure;
+    % contourf(percent_grid, h_grid, eigenvalues);
+    % grid();
+    % colorbar("Ticks", 0:0.5:6, "Direction", "reverse");
+
+    %% sampling time selection
+    h_stable = 0.55;
+
+    p = [-2+j -2-j];
+    K_original = place(ogss.A, ogss.B, p);
+
+    ntau = 100;
+    taus = linspace(0, 0.99, ntau);
+>>>>>>> 018cbf2 (clean up identification networked and integration proj)
     eigenvalues = zeros(size(taus));
     for i = 1:ntau
         eigenvalues(i) = eigenvalue(taus(i), h_stable);
     end
 
+<<<<<<< HEAD
     figure; 
+=======
+    figure;
+>>>>>>> 018cbf2 (clean up identification networked and integration proj)
     plot(taus*h_stable, eigenvalues);
     grid("on");
     xlabel("tau");
@@ -47,6 +80,7 @@ function [eigenvalues, percent_grid, h_grid] = q2()
 
     max_delay_for_original_controller = max(h_stable*taus(eigenvalues < 1))
 
+<<<<<<< HEAD
     edge_system = get_delayed_system(0.55, 0.01);
 
     save("max_delay_system.mat", "edge_system");
@@ -70,6 +104,12 @@ function [eigenvalues, percent_grid, h_grid] = q2()
 
 
  
+=======
+    edge_system = get_delayed_system(0.55, 0.0104);
+
+    save("max_delay_system.mat", "edge_system");
+
+>>>>>>> 018cbf2 (clean up identification networked and integration proj)
 
 end
 
@@ -93,6 +133,7 @@ function [biggest] = eigenvalue(tau_perc, h)
 end
 
 
+<<<<<<< HEAD
 function [biggest, poles] = eigenvalue_pole(tau_perc, h, K)
     tau = h * tau_perc;
     ogss = create_ogss();
@@ -108,6 +149,19 @@ function [biggest, poles] = eigenvalue_pole(tau_perc, h, K)
     
     poles = pole(fedback);
     biggest = max(abs(pole(fedback)));
+=======
+function [sys] = create_ogss()
+    studentnumber = 5476747;
+    a = 5;
+    b = 7;
+    c = 7;
+
+    A = [0, 0.5 - c ; 0.2 + a - b, -1];
+    B = [1.0; 0.0];
+    C = eye(2);
+    D = [0; 0];
+    sys = ss(A, B, C, D);
+>>>>>>> 018cbf2 (clean up identification networked and integration proj)
 end
 
 function [sys] = get_delayed_system(tau, h)
@@ -122,6 +176,7 @@ function [sys] = get_delayed_system(tau, h)
     sys = ss(F, G, eye(3), zeros(3,1), h);
 end
 
+<<<<<<< HEAD
 function [sys] = get_fedback_system(tau, h, K)
     ogss = create_ogss();
     Fx = expm(ogss.A * h);
@@ -155,3 +210,6 @@ function [eigenvalues, set_poles, K] = get_delay_response_for_poles(target_poles
 
 
 end
+=======
+function 
+>>>>>>> 018cbf2 (clean up identification networked and integration proj)
